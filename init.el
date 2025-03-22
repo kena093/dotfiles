@@ -1,421 +1,195 @@
+;;; ====================
+;;; 日本語環境と基本設定
+;;; ====================
+(set-language-environment "Japanese")
+(prefer-coding-system 'utf-8)
+(set-default 'buffer-file-coding-system 'utf-8)
 
+(setq make-backup-files nil
+      auto-save-default nil
+      create-lockfiles nil
+      display-line-numbers-type 'relative
+      use-short-answers t
+      ring-bell-function 'ignore
+      case-fold-search t
+      show-trailing-whitespace t
+      default-file-modes 420) ;; 0644
 
-(setq make-backup-files nil)
-(setq auto-save-default nil)
-(setq create-lockfiles nil)
+;; フォント設定（PlemolJP Console 使用）
+(set-face-attribute 'default nil :family "PlemolJP Console" :height 120)
 
+(global-display-line-numbers-mode t)
+(global-set-key (kbd "C-h") 'delete-backward-char)
+(scroll-bar-mode -1)
+(menu-bar-mode -1)
+(global-font-lock-mode t)
+(global-hl-line-mode +1)
 
+;; ターミナル環境でのマウス有効化
+(when (not (display-graphic-p))
+  (xterm-mouse-mode 1))
+  
+;; ツールバーを非表示
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))
 
-(setq custom-file (locate-user-emacs-file "custom.el"))
-(load custom-file :no-error-if-file-is-missing)
+;; メニューバーを非表示
+(when (fboundp 'menu-bar-mode)
+  (menu-bar-mode -1))
 
-;;; Set up the package manager
+;; スクロールバーも非表示（任意）
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
 
+;;; ====================
+;;; パッケージ設定
+;;; ====================
 (require 'package)
+(setq package-archives
+      '(("melpa" . "https://melpa.org/packages/")
+        ("gnu"   . "https://elpa.gnu.org/packages/")))
 (package-initialize)
 
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-(when (< emacs-major-version 29)
-  (unless (package-installed-p 'use-package)
-    (unless package-archive-contents
-      (package-refresh-contents))
-    (package-install 'use-package)))
+(require 'use-package)
+(setq use-package-always-ensure t)
 
-(add-to-list 'display-buffer-alist
-             '("\\`\\*\\(Warnings\\|Compile-Log\\)\\*\\'"
-               (display-buffer-no-window)
-               (allow-no-window . t)))
-
-;;; Basic behaviour
-
-(use-package delsel
-  :ensure nil
-  :hook (after-init . delete-selection-mode))
-
-(defun prot/keyboard-quit-dwim ()
-  "Do-What-I-Mean behaviour for a general `keyboard-quit'.
-
-The generic `keyboard-quit' does not do the expected thing when
-the minibuffer is open.  Whereas we want it to close the
-minibuffer, even without explicitly focusing it.
-
-The DWIM behaviour of this command is as follows:
-
-- When the region is active, disable it.
-- When a minibuffer is open, but not focused, close the minibuffer.
-- When the Completions buffer is selected, close it.
-- In every other case use the regular `keyboard-quit'."
-  (interactive)
-  (cond
-   ((region-active-p)
-    (keyboard-quit))
-   ((derived-mode-p 'completion-list-mode)
-    (delete-completion-window))
-   ((> (minibuffer-depth) 0)
-    (abort-recursive-edit))
-   (t
-    (keyboard-quit))))
-
-(define-key global-map (kbd "C-g") #'prot/keyboard-quit-dwim)
-
-;;; Tweak the looks of Emacs
-
-;; Those three belong in the early-init.el, but I am putting them here
-;; for convenience.  If the early-init.el exists in the same directory
-;; as the init.el, then Emacs will read+evaluate it before moving to
-;; the init.el.
-(menu-bar-mode 1)
-(scroll-bar-mode 1)
-(tool-bar-mode -1)
-
-(let ((mono-spaced-font "Monospace")
-      (proportionately-spaced-font "Sans"))
-  (set-face-attribute 'default nil :family mono-spaced-font :height 100)
-  (set-face-attribute 'fixed-pitch nil :family mono-spaced-font :height 1.0)
-  (set-face-attribute 'variable-pitch nil :family proportionately-spaced-font :height 1.0))
-
-(use-package modus-themes
-  :ensure t
-  :config
-  (load-theme 'modus-vivendi-tinted :no-confirm-loading))
-
-;; Remember to do M-x and run `nerd-icons-install-fonts' to get the
-;; font files.  Then restart Emacs to see the effect.
-(use-package nerd-icons
-  :ensure t)
-
-(use-package nerd-icons-completion
-  :ensure t
-  :after marginalia
-  :config
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
-
-(use-package nerd-icons-corfu
-  :ensure t
-  :after corfu
-  :config
-  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
-
-(use-package nerd-icons-dired
-  :ensure t
-  :hook
-  (dired-mode . nerd-icons-dired-mode))
-
-;;; Configure the minibuffer and completions
-
-(use-package vertico
-  :ensure t
-  :hook (after-init . vertico-mode))
+;;; ====================
+;;; 補完・検索関連
+;;; ====================
+(use-package consult
+  :bind (("C-x b" . consult-buffer)
+         ("C-x C-r" . consult-recent-file)
+         ("M-g g" . consult-goto-line)))
 
 (use-package marginalia
-  :ensure t
-  :hook (after-init . marginalia-mode))
+  :init (marginalia-mode 1))
 
 (use-package orderless
-  :ensure t
-  :config
-  (setq completion-styles '(orderless basic))
-  (setq completion-category-defaults nil)
-  (setq completion-category-overrides nil))
+  :init
+  (setq completion-styles '(orderless)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package savehist
-  :ensure nil ; it is built-in
-  :hook (after-init . savehist-mode))
-
+;;; ====================
+;;; Corfu + Cape 補完システム
+;;; ====================
 (use-package corfu
-  :ensure t
-  :hook (after-init . global-corfu-mode)
-  :bind (:map corfu-map ("<tab>" . corfu-complete))
+  :custom
+  (corfu-auto t)
+  (corfu-auto-delay 0)
+  (corfu-auto-prefix 1)
+  (corfu-cycle t)
+  (corfu-on-exact-match nil)
+  (tab-always-indent 'complete)
+  :bind (:map corfu-map
+              ("S-SPC" . corfu-insert))
+  :init
+  (global-corfu-mode +1))
+
+;; LSP補完は Corfu に任せる
+(with-eval-after-load 'lsp-mode
+  (setq lsp-completion-provider :none))
+
+;; ターミナル用 Corfu 拡張
+(use-package corfu-terminal
+  :after corfu
+  :init
+  (unless (display-graphic-p)
+    (corfu-terminal-mode +1)))
+
+;; Cape による補完ソース追加
+(use-package cape
+  :init
+  (dolist (hook '(python-mode-hook c-mode-hook))
+    (add-hook hook
+              (lambda ()
+                (add-to-list 'completion-at-point-functions #'eglot-completion-at-point))))
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-dabbrev))
+
+;;; ====================
+;;; smartparens（括弧補完）
+;;; ====================
+(use-package smartparens
+  :bind (:map smartparens-mode-map
+              ("C-M-a" . sp-beginning-of-sexp)
+              ("C-M-e" . sp-end-of-sexp)
+              ("C-M-f" . sp-forward-symbol)
+              ("C-M-b" . sp-backward-symbol)
+              ("C-s-f" . sp-forward-sexp)
+              ("C-s-b" . sp-backward-sexp)
+              ("C-c (" . wrap-with-parens)
+              ("C-c [" . wrap-with-brackets)
+              ("C-c {" . wrap-with-braces)
+              ("C-c '" . wrap-with-single-quotes)
+              ("C-c \"" . wrap-with-double-quotes)
+              ("M-]" . sp-unwrap-sexp)
+              ("M-k" . sp-kill-sexp))
+  :init
+  (smartparens-global-mode t)
+  (require 'smartparens-config)
   :config
-  (setq tab-always-indent 'complete)
-  (setq corfu-preview-current nil)
-  (setq corfu-min-width 20)
+  ;; 囲み用のラップ関数定義マクロ
+  (defmacro def-pairs (pairs)
+    `(progn
+       ,@(cl-loop for (key . val) in pairs
+                  collect
+                  `(defun ,(intern (concat "wrap-with-" (symbol-name key) "s"))
+                       (&optional arg)
+                     (interactive "p")
+                     (sp-wrap-with-pair ,val)))))
+  (def-pairs ((paren . "(")
+              (bracket . "[")
+              (brace . "{")
+              (single-quote . "'")
+              (double-quote . "\""))))
 
-  (setq corfu-popupinfo-delay '(1.25 . 0.5))
-  (corfu-popupinfo-mode 1) ; shows documentation after `corfu-popupinfo-delay'
-
-  ;; Sort by input history (no need to modify `corfu-sort-function').
-  (with-eval-after-load 'savehist
-    (corfu-history-mode 1)
-    (add-to-list 'savehist-additional-variables 'corfu-history)))
-
-;;; The file manager (Dired)
-
-(use-package dired
-  :ensure nil
-  :commands (dired)
+;;; ====================
+;;; org-mode 設定
+;;; ====================
+(use-package org-modern
+  :custom
+  (org-modern-progress '("○" "◔" "◑" "◕" "✅"))
+  (org-modern-star '("●" "○" "■" "◆" "◇" "✿"))
+  (org-ellipsis " ▼")
   :hook
-  ((dired-mode . dired-hide-details-mode)
-   (dired-mode . hl-line-mode))
-  :config
-  (setq dired-recursive-copies 'always)
-  (setq dired-recursive-deletes 'always)
-  (setq delete-by-moving-to-trash t)
-  (setq dired-dwim-target t))
+  ((org-mode . org-modern-mode)
+   (org-mode . org-indent-mode)
+   (org-agenda-finalize . org-modern-agenda)))
 
-(use-package dired-subtree
-  :ensure t
-  :after dired
-  :bind
-  ( :map dired-mode-map
-    ("<tab>" . dired-subtree-toggle)
-    ("TAB" . dired-subtree-toggle)
-    ("<backtab>" . dired-subtree-remove)
-    ("S-TAB" . dired-subtree-remove))
-  :config
-  (setq dired-subtree-use-backgrounds nil))
+;; カスタム TODO 状態を定義
+(setq org-todo-keywords
+      '((sequence "TODO" "WAIT" "SOME" "|" "DONE" "CANCELLED")))
 
-(use-package trashed
-  :ensure t
-  :commands (trashed)
-  :config
-  (setq trashed-action-confirmer 'y-or-n-p)
-  (setq trashed-use-header-line t)
-  (setq trashed-sort-key '("Date deleted" . t))
-  (setq trashed-date-format "%Y-%m-%d %H:%M:%S"))
+;; TODO やチェックボックスの変更時に統計を自動更新
+(add-hook 'org-after-todo-state-change-hook #'org-update-statistics-cookies)
+(add-hook 'org-checkbox-statistics-hook #'org-update-statistics-cookies)
 
+;; その他 org-mode 設定
+(setq org-use-speed-commands t)
+(setq org-directory (expand-file-name "c:/Users/Documents/org/"))
+(setq org-agenda-files (list org-directory))
+(setq org-agenda-window-setup 'current-window)
+(define-key global-map "\C-ca" 'org-agenda)
 
-;; magitの設定
-(use-package magit
-  :ensure t
-  :bind (("C-x g" . magit-status)))
+;;; ====================
+;;; Custom-generated variables（Emacsが自動追加する領域）
+;;; ====================
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages '(org-journal doom-modeline doom-themes magit modus-themes)))
+ '(org-startup-folded t)
+ '(package-selected-packages nil))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-
-;; C-h
-
-(global-set-key "￥C-h" delete-backward-char)
-
-
-    ;; 括弧を自動補完
-(electric-pair-mode 1)
-;; 括弧のペアを光らせる
-(show-paren-mode 1)
-
-
-(setq org-use-speed-commands t)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-     (global-set-key "\C-cl" 'org-store-link)
-     (global-set-key "\C-cc" 'org-capture)
-     (global-set-key "\C-ca" 'org-agenda)
-     (global-set-key "\C-cb" 'org-iswitchb)
