@@ -5,12 +5,17 @@
 (when (equal system-type 'darwin)
   (setq mac-command-modifier 'meta))
 
+(define-key key-translation-map [?\C-h] [?\C-?])
+
 (tool-bar-mode 0)
 (menu-bar-mode 0)
 (scroll-bar-mode 0)
 (column-number-mode 1)
 (show-paren-mode 1)
 
+(global-set-key (kbd "C-x O") (lambda ()
+                                (interactive)
+                                (other-window -1)))
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -75,7 +80,7 @@
 ;; -----------------------------------------------------------
 (set-face-attribute 'default nil
                     :family "JetBrains Mono NL"
-                    :height 120) ;; 120 = 12pt
+                    :height 140) ;; 120 = 12pt
 
 ;; 行番号を表示 (変数を設定するだけでは表示されないので、モードをONにします)
 (setq display-line-numbers-type t)
@@ -85,7 +90,11 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(ace-window ayu-theme consult corfu doom-themes dumb-jump ggtags
+		gruber-darker-theme kanagawa-themes lsp-ui magit-delta
+		marginalia move-text multiple-cursors orderless
+		paredit rust-mode vertico vterm yasnippet))
  '(warning-suppress-types '((use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -301,3 +310,33 @@
                     "--header-insertion=never"))))
 
 (setq delete-by-moving-to-trash t)
+
+(use-package vterm
+  ;; requirements: brew install cmake libvterm libtool
+  :ensure t
+  :custom
+  (vterm-max-scrollback 10000)
+  (vterm-buffer-name-string "vterm: %s")
+  ;; delete "C-h", add <f1> and <f2>
+  (vterm-keymap-exceptions
+   '("<f1>" "<f2>" "C-c" "C-x" "C-u" "C-g" "C-l" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y" "M-w"))
+  :config
+  ;; Workaround of not working counsel-yank-pop
+  ;; https://github.com/akermu/emacs-libvterm#counsel-yank-pop-doesnt-work
+  (defun my/vterm-counsel-yank-pop-action (orig-fun &rest args)
+    (if (equal major-mode 'vterm-mode)
+        (let ((inhibit-read-only t)
+              (yank-undo-function (lambda (_start _end) (vterm-undo))))
+          (cl-letf (((symbol-function 'insert-for-yank)
+                     (lambda (str) (vterm-send-string str t))))
+            (apply orig-fun args)))
+      (apply orig-fun args)))
+
+  (advice-add 'counsel-yank-pop-action :around #'my/vterm-counsel-yank-pop-action))
+
+
+(use-package ace-window
+  :ensure t
+  :bind ("M-o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))）)
