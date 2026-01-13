@@ -90,11 +90,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(ace-window ayu-theme consult corfu doom-themes dumb-jump ggtags
-		gruber-darker-theme kanagawa-themes lsp-ui magit-delta
-		marginalia move-text multiple-cursors orderless
-		paredit rust-mode vertico vterm yasnippet))
+ '(package-selected-packages nil)
  '(warning-suppress-types '((use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -337,6 +333,102 @@
 
 (use-package ace-window
   :ensure t
-  :bind ("M-o" . ace-window)
+  :bind ("C-o" . ace-window)
   :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))）)
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+
+(use-package expand-region
+  :ensure t
+  :bind ("C-=" . er/expand-region))
+
+;; Embarkのインストールと設定
+(use-package embark
+  :ensure t
+  :bind
+  (("C-." . embark-act)         ; 通常時も C-. でEmbarkを使えるようにする（便利です）
+   ("C-:" . embark-dwim)        ; 文脈に応じたアクション
+   ("C-h B" . embark-bindings)) ; キーバインド一覧
+  :init
+  ;; ミニバッファでC-oを押すとEmbarkが動くようにするなど
+  (setq prefix-help-command #'embark-prefix-help-command))
+
+(use-package avy
+  :ensure t
+  :bind ("C-;" . avy-goto-char-timer)
+  :config
+  ;; -----------------------------------------------------------
+  ;; 1. カスタムアクション関数の定義
+  ;;    Avy読み込み後に定義されるようにここに書きます
+  ;; -----------------------------------------------------------
+
+  ;; 行削除 (K)
+  (defun avy-action-kill-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (kill-whole-line))
+    (select-window
+     (cdr (ring-ref avy-ring 0)))
+    t)
+
+  ;; 行コピー (W)
+  (defun avy-action-copy-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (cl-destructuring-bind (start . end)
+          (bounds-of-thing-at-point 'line)
+        (copy-region-as-kill start end)))
+    (select-window
+     (cdr (ring-ref avy-ring 0)))
+    t)
+
+  ;; 行ヤンク (Y)
+  (defun avy-action-yank-whole-line (pt)
+    (avy-action-copy-whole-line pt)
+    (save-excursion (yank))
+    t)
+
+  ;; 行移動 (T)
+  (defun avy-action-teleport-whole-line (pt)
+    (avy-action-kill-whole-line pt)
+    (save-excursion (yank))
+    t)
+
+  ;; マーク (SPC)
+  (defun avy-action-mark-to-char (pt)
+    (activate-mark)
+    (goto-char pt))
+
+  ;; スペルチェック (;)
+  (defun avy-action-flyspell (pt)
+    (save-excursion
+      (goto-char pt)
+      (when (require 'flyspell nil t)
+        (flyspell-auto-correct-word)))
+    (select-window
+     (cdr (ring-ref avy-ring 0)))
+    t)
+
+  ;; Embark (.)
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (embark-act))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+
+  ;; -----------------------------------------------------------
+  ;; 2. キー割り当て (変数 avy-dispatch-alist の編集)
+  ;; -----------------------------------------------------------
+  (setf (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
+        (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line
+        (alist-get ?y avy-dispatch-alist) 'avy-action-yank
+        (alist-get ?w avy-dispatch-alist) 'avy-action-copy
+        (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
+        (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line
+        (alist-get ?t avy-dispatch-alist) 'avy-action-teleport
+        (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line
+        (alist-get ?\s avy-dispatch-alist) 'avy-action-mark-to-char ; SPCキーは ?\s
+        (alist-get ?\; avy-dispatch-alist) 'avy-action-flyspell
+        (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
