@@ -1,0 +1,51 @@
+theme = "gruvbox"
+
+[editor]
+true-color=true
+cursorline=true
+mouse=true
+bufferline="multiple"
+popup-border="all"
+idle-timeout=0
+lsp.display-messages = true
+lsp.display-inlay-hints = true
+auto-format = true
+
+[editor.cursor-shape]
+insert="bar"
+normal="block"
+select="underline"
+
+[editor.statusline]
+left = ["mode", "spinner"]
+center = ["file-name"]
+right = ["diagnostics", "selections", "position-percentage", "position",  "file-encoding", "file-line-ending", "file-type"]
+separator = "│"
+mode.normal = "normal"
+mode.insert = "insert"
+mode.select = "select"
+
+[editor.file-picker]
+hidden=false
+
+[editor.whitespace.render]
+tab = "all"
+
+[editor.indent-guides]
+render = true
+character = "|" 
+
+[keys.normal]
+X = "select_line_above"
+x = "select_line_below"
+
+"A-j" = [ "extend_to_line_bounds", "delete_selection", "paste_after" ]
+"A-k" = [ "extend_to_line_bounds", "delete_selection", "move_line_up", "paste_before" ]
+"A-J" = [ "extend_to_line_bounds", "yank", "paste_after" ]
+"A-K" = [ "extend_to_line_bounds", "yank", "paste_before" ]
+
+C-A-j="jump_backward"
+C-A-k="jump_forward"
+
+J = ["page_down", "align_view_center"]
+K = ["page_up", "align_view_center"]

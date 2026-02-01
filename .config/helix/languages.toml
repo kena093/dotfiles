@@ -1,0 +1,47 @@
+[language-server.rust-analyzer.config]
+checkOnSave = { command = "clippy" }
+cargo = { allFeatures = true }
+procMacro = { enable = true }
+
+[[language]]
+name = "rust"
+auto-format = true
+language-servers = [ "rust-analyzer" ]
+
+[language-server.zls]
+command = "zls"
+
+[[language]]
+name = "zig"
+auto-format = true
+language-servers = [ "zls" ]
+
+[[language]]
+name = "python"
+language-servers = ["pylsp"]
+auto-format = true
+# Blackとisortをパイプで繋いで確実に実行
+formatter = { command = "sh", args = ["-c", "isort - | black -"] }
+
+[language-server.pylsp.config.pylsp]
+# --- Lint (Ruff & Mypy) ---
+plugins.ruff.enabled = true
+# 提示されたルールを反映
+plugins.ruff.extendSelect = [
+  "E", "W", "F", "B", "I", "RUF", "D", "UP", "ANN", "ASYNC", 
+  "S", "YTT", "A", "RET", "TCH", "ARG", "PTH", "ERA", "LOG", 
+  "N", "C4", "T10", "SIM", "TRY", "C90", "PGH"
+]
+
+plugins.pylsp_mypy.enabled = true
+plugins.pylsp_mypy.live_mode = true
+
+# --- Formatter ---
+plugins.black.enabled = true
+plugins.isort.enabled = true
+
+# --- 競合ツールの停止 ---
+plugins.pyflakes.enabled = false
+plugins.pycodestyle.enabled = false
+plugins.mccabe.enabled = false
+plugins.flake8.enabled = false
