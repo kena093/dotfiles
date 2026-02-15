@@ -1,9 +1,11 @@
-vim.keymap.set('n', '<leader>q', '<cmd>qa<CR>')
-vim.keymap.set('n', '<leader>w', '<cmd>w<CR>')
 vim.keymap.set('n', '<leader>n', '<cmd>nohl<CR>')
+vim.keymap.set("n", "<leader>w=", "<C-w>=", { desc = "Normalize window sizes" })
+vim.keymap.set("n", "<leader>wm", "<cmd>only<cr>", { desc = "Maximize window (close others)" })
+vim.keymap.set("n", "<leader>bo", "<cmd>%bd|e#|bd#<cr>", { desc = "Close all other buffers" })
+vim.keymap.set("n", "<leader>x", "<cmd>close<cr>", { desc = "Close Window (keep buffer)" })
 
-vim.keymap.set("n", "<leader>t", "<CMD>Oil<CR>", { desc = "Open file explorer" })
-vim.keymap.set('n', "<leader>ss", "<CMD>luafile %<CR>", { desc = "Execute current lua" })
+vim.keymap.set("n", "<leader>e", "<CMD>Oil<CR>", { desc = "Open file explorer" })
+vim.keymap.set('n', "<leader>ls", "<CMD>luafile %<CR>", { desc = "Execute current lua" })
 vim.keymap.set('n', '<leader>bo', '<cmd>silent! %bd|e#|bd#<cr>', { desc = "Close all buffers except current" })
 
 vim.keymap.set('n', '>', '>>')
@@ -58,3 +60,7 @@ vim.keymap.set({ "n", "v" }, "L", "$", { desc = "Go to end of line" })
 vim.keymap.set("n", "<S-h>", "<cmd>bprevious<cr>", { desc = "Prev Buffer" })
 
 vim.keymap.set("n", "<S-l>", "<cmd>bnext<cr>", { desc = "Next Buffer" })
+
+vim.keymap.set("n", "<M-j>", "<cmd>m .+1<cr>", { desc = "Move Down" })
+vim.keymap.set("n", "<M-k>", "<cmd>m .-2<cr>", { desc = "Move Up" })
+

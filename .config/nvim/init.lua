@@ -124,7 +124,17 @@ require("lazy").setup({
     dependencies = { "nvim-lua/plenary.nvim" },
     keys = {
       { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
+
+      -- 検索
       { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
+      { "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+      { "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help Tags" },
+      { "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Recent Files" },
+    
+      -- Git
+      { "<leader>fc", "<cmd>Telescope git_commits<cr>", desc = "Git Commits" },
+      { "<leader>fs", "<cmd>Telescope git_status<cr>", desc = "Git Status" },
+      { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "Diagnostics" },
     },
   },
 
@@ -182,11 +192,47 @@ require("lazy").setup({
     lazy = false,
     opts = { picker = { enabled = true }, lazygit = { enabled = true } },
     keys = {
+      -- スマートピッカー
       { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Picker" },
       { "<leader>gg", function() Snacks.lazygit.open() end, desc = "LazyGit" },
+
+      -- 検索系
+      { "<leader>sf", function() Snacks.picker.files() end, desc = "Find Files" },
+      { "<leader>sg", function() Snacks.picker.grep() end, desc = "Grep (Text Search)" },
+      { "<leader>sw", function() Snacks.picker.grep_word() end, desc = "Visual selection or word" },
+      { "<leader>sb", function() Snacks.picker.buffers() end, desc = "Buffers" },
+      { "<leader>sr", function() Snacks.picker.recent() end, desc = "Recent Files" },
+
+      -- システム 
+      { "<leader>sc", function() Snacks.picker.command_history() end, desc = "Command History" },
+      { "<leader>sh", function() Snacks.picker.help() end, desc = "Help Pages" },
+      { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
+      { "<leader>sd", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
+      { "<leader>bd", function() Snacks.bufdelete() end, desc = "Close Buffer" },
+    
+      -- LSP
+      { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
+      { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume Last Picker" },
     },
   },
-  { "WilliamHsieh/overlook.nvim" },
+  {
+    "WilliamHsieh/overlook.nvim",
+    config = function()
+      require("overlook").setup({})
+    end,
+    keys = {
+      { "<leader>pd", function() require("overlook.api").peek_definition() end, desc = "Peek definition" },
+      { "<leader>pp", function() require("overlook.api").peek_cursor() end, desc = "Peek cursor" },
+      { "<leader>pc", function() require("overlook.api").close_all() end, desc = "Close all popups" },
+      { "<leader>pu", function() require("overlook.api").restore_popup() end, desc = "Restore last popup" },
+      { "<leader>pU", function() require("overlook.api").restore_all_popups() end, desc = "Restore all popups" },
+      { "<leader>pf", function() require("overlook.api").switch_focus() end, desc = "Switch focus" },
+      { "<leader>ps", function() require("overlook.api").open_in_split() end, desc = "Open popup in split" },
+      { "<leader>pv", function() require("overlook.api").open_in_vsplit() end, desc = "Open popup in vsplit" },
+      { "<leader>pt", function() require("overlook.api").open_in_tab() end, desc = "Open popup in tab" },
+      { "<leader>po", function() require("overlook.api").open_in_original_window() end, desc = "Open popup in current window" },
+    },
+  },
   { "folke/trouble.nvim", opts = {} },
   {
     "stevearc/oil.nvim",
@@ -205,6 +251,8 @@ require("lazy").setup({
           ["<CR>"] = "actions.select",
           ["<leader>p"] = "actions.preview",
           ["<leader>r"] = "actions.refresh",
+          ["<C-v>"] = { "actions.select", opts = { vertical = true }, desc = "Open the selection in a vertical split" },
+          ["<C-s>"] = { "actions.select", opts = { horizontal = true }, desc = "Open the selection in a horizontal split" },
         },
       })
 

@@ -36,3 +36,5 @@ end
 
 vim.opt.termguicolors = true
 vim.o.background = "dark"
+vim.opt.swapfile = false
+vim.o.signcolumn = "yes"

@@ -5,6 +5,12 @@ opt.number = true
 opt.relativenumber = true
 vim.g.zig_fmt_autosave = 1
 opt.autoread = true
+opt.tabstop = 2
+opt.shiftwidth = 2
+opt.expandtab = true
+opt.smartindent = true
+opt.undofile = true
+
 
 -- key sequence wait time(ms)
 opt.timeoutlen = 300
