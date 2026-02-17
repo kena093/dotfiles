@@ -7,12 +7,13 @@
 
 (define-key key-translation-map [?\C-h] [?\C-?])
 
+(setq-default cursor-type 'box)
 (tool-bar-mode 0)
 (menu-bar-mode 0)
 (scroll-bar-mode 0)
 (column-number-mode 1)
 (show-paren-mode 1)
-
+(delete-selection-mode 1)
 (global-set-key (kbd "C-x O") (lambda ()
                                 (interactive)
                                 (other-window -1)))
@@ -26,6 +27,18 @@
 
 (eval-when-compile
   (require 'use-package))
+
+(use-package clipetty
+  :ensure t
+  :hook (after-init . global-clipetty-mode))
+
+
+
+
+(add-hook 'diff-hl-mode-on-hook
+          (lambda ()
+            (unless (display-graphic-p)
+              (diff-hl-margin-local-mode))))
 
 ;; telescope代替
 ;; -----------------------------------------------------------
@@ -90,7 +103,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
  '(warning-suppress-types '((use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -112,6 +126,14 @@
   (corfu-cycle t)                ;; 候補リストをループさせる
   :init
   (global-corfu-mode))
+
+ ;; ターミナル環境用の設定を追加
+(use-package corfu-terminal
+  :ensure t
+  :after corfu
+  :init
+  (unless (display-graphic-p)    ;; GUIではない（ターミナルの）場合のみ有効化
+    (corfu-terminal-mode 1)))
 
 ;; -----------------------------------------------------------
 ;; 7. 各言語用モードの準備
@@ -165,24 +187,14 @@
   :config
   (yas-global-mode 1))
 
-;; -----------------------------------------------------------
-;; テーマ設定 (Doom版 Ayu Mirage)
-;; モダンなプラグイン(Vertico/Magit等)との相性が抜群です
-;; -----------------------------------------------------------
-(use-package doom-themes
+(use-package gruvbox-theme
   :ensure t
+  :init
+  ;; 読み込み時の警告を抑制（おまじない）
+  (setq native-comp-async-report-warnings-errors 'silent)
   :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'gruvbox-dark-medium t))
 
-  ;; テーマをロード
-  (load-theme 'doom-ayu-mirage t)
-
-  ;; (オプション) モデルラインを見やすくする
-  (doom-themes-org-config))
-
-;; 行末の空白を削除 & 可視化
 (use-package whitespace
   :init
   (global-whitespace-mode 1)
@@ -281,29 +293,16 @@
 (use-package eglot
   :ensure t
   ;; C/C++ モードで起動
-  :hook ((c-mode c++-mode) . eglot-ensure)
+  :hook ((c-mode c++-mode python-mode) . eglot-ensure)
   :config
-  ;; Eglotが起動した直後に、余計な表示機能をオフにする設定
-  (add-hook 'eglot-managed-mode-hook
-            (lambda ()
-              ;; 1. エラー表示 (Flymake) を無効化
-              ;;    これで赤い波線が出なくなります
-              (flymake-mode -1)
-
-              ;; 2. 補完ポップアップ (Corfu) をこのバッファだけ無効化
-              ;;    これで勝手に候補が出なくなります
-              (corfu-mode -1)
-
-              ;; 3. ヒント表示 (Inlay Hints) を無効化
-              (eglot-inlay-hints-mode -1)))
-
-  ;; clangd の設定 (バックグラウンドでの解析はさせておく)
   (add-to-list 'eglot-server-programs
                '((c-mode c++-mode)
                  . ("clangd"
                     "-j=4"
                     "--background-index"
-                    "--header-insertion=never"))))
+                    "--header-insertion=never")))
+  (add-to-list 'eglot-server-programs
+               `(python-mode . ("pylsp"))))
 
 (setq delete-by-moving-to-trash t)
 
@@ -330,10 +329,18 @@
 
   (advice-add 'counsel-yank-pop-action :around #'my/vterm-counsel-yank-pop-action))
 
+(use-package eat
+  :ensure t
+  :bind ("C-c v" . eat-project-other-window)
+  :config
+  (setq eat-kill-ring-max 1000)
+  (eat-eshell-mode 1)
+  (eat-reload))
+
 
 (use-package ace-window
   :ensure t
-  :bind ("C-o" . ace-window)
+  :bind ("M-o" . ace-window)
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
@@ -432,3 +439,13 @@
         (alist-get ?\s avy-dispatch-alist) 'avy-action-mark-to-char ; SPCキーは ?\s
         (alist-get ?\; avy-dispatch-alist) 'avy-action-flyspell
         (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
+
+
+(use-package ultra-cursor     ; 1. カーソルがヌルヌル動く
+  :ensure (:host github :repo "mclear-tools/ultra-cursor")
+  :config (ultra-cursor-mode 1))
+
+(use-package ultra-scroll     ; 2. スクロールが爆速かつ滑らか
+  :ensure (:host github :repo "jdtsmith/ultra-scroll")
+  :init (setq scroll-conservatively 101)
+  :config (ultra-scroll-mode 1))
