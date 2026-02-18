@@ -3,7 +3,7 @@
 ;; -----------------------------------------------------------
 ;; macOS かつ、GUI版で起動している時だけ Command を Meta にする
 (when (equal system-type 'darwin)
-  (setq mac-command-modifier 'meta))
+(setq mac-command-modifier 'meta))
 
 (define-key key-translation-map [?\C-h] [?\C-?])
 
@@ -17,6 +17,23 @@
 (global-set-key (kbd "C-x O") (lambda ()
                                 (interactive)
                                 (other-window -1)))
+
+(global-set-key (kbd "M-[") 'previous-buffer)
+(global-set-key (kbd "M-]") 'next-buffer)
+
+(defun my-backward-other-window ()
+  (interactive)
+  (other-window -1))
+
+(global-set-key (kbd "C-x p") #'my-backward-other-window)
+
+(put 'my-backward-other-window 'repeat-map
+     (let ((map (make-sparse-keymap)))
+       (define-key map "p" #'my-backward-other-window)
+       map))
+
+(repeat-mode 1)
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -32,15 +49,11 @@
   :ensure t
   :hook (after-init . global-clipetty-mode))
 
-
-
-
 (add-hook 'diff-hl-mode-on-hook
           (lambda ()
             (unless (display-graphic-p)
               (diff-hl-margin-local-mode))))
 
-;; telescope代替
 ;; -----------------------------------------------------------
 ;; 5. 補完・検索インターフェース (Telescopeの代替)
 ;; -----------------------------------------------------------
@@ -267,7 +280,7 @@
       (consult-git-grep nil text))))
 
 ;; キーバインド設定
-(global-set-key (kbd "C-x p s") 'my/consult-grep-from-region)
+(global-set-key (kbd "M-s") 'my/consult-grep-from-region)
 
 ;; -----------------------------------------------------------
 ;; 定義ジャンプ (Dumb Jump)
@@ -337,24 +350,17 @@
   (eat-eshell-mode 1)
   (eat-reload))
 
-
-(use-package ace-window
-  :ensure t
-  :bind ("M-o" . ace-window)
-  :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
-
 (use-package expand-region
   :ensure t
-  :bind ("C-=" . er/expand-region))
+  :bind ("M-o" . er/expand-region))
 
 ;; Embarkのインストールと設定
 (use-package embark
   :ensure t
   :bind
-  (("C-." . embark-act)         ; 通常時も C-. でEmbarkを使えるようにする（便利です）
-   ("C-:" . embark-dwim)        ; 文脈に応じたアクション
-   ("C-h B" . embark-bindings)) ; キーバインド一覧
+  (("C-." . embark-act)	; 通常時も C-. でEmbarkを使えるようにする（便利です）
+   ("C-:" . embark-dwim)		; 文脈に応じたアクション
+   ("C-h B" . embark-bindings))		; キーバインド一覧
   :init
   ;; ミニバッファでC-oを押すとEmbarkが動くようにするなど
   (setq prefix-help-command #'embark-prefix-help-command))
