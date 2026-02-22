@@ -4,6 +4,13 @@ require("general")
 require("utils")
 require("keymaps")
 
+if vim.fn.has("win32") == 1 then
+  vim.opt.shell = "bash"
+  vim.opt.shellcmdflag = "-c"
+  vim.opt.shellquote = '"'
+  vim.opt.shellxquote = "" 
+end
+
 -- 2. プラグインマネージャ (lazy.nvim) の起動準備
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -55,47 +62,47 @@ require("lazy").setup({
     config = function(_, opts)
       local toggleterm = require("toggleterm")
       local harpoon = require("harpoon")
-
       local function close_harpoon_menu()
         if harpoon.ui.win_id and vim.api.nvim_win_is_valid(harpoon.ui.win_id) then
           harpoon.ui:close_menu()
         end
       end
-
       local current_term = nil
+      local function safe_hide()
+        if #vim.api.nvim_list_wins() > 1 then
+          vim.cmd("hide")
+        else
+          vim.cmd("bp") 
+        end
+      end
       local function switch_terminal(target_term)
         return function()
           close_harpoon_menu()
           if current_term == target_term then
-            vim.cmd("hide")
+            safe_hide()
             current_term = nil
             return
           end
-          if current_term ~= nil then vim.cmd("hide") end
+          if current_term ~= nil then safe_hide() end
           local dir = _G.Cwd and _G.Cwd() or vim.fn.getcwd()
           vim.cmd(string.format("%dToggleTerm dir=%s", target_term, dir))
           current_term = target_term
         end
       end
-
-      vim.keymap.set("n", "<leader>1", switch_terminal(1))
-      vim.keymap.set("n", "<leader>2", switch_terminal(2))
-      vim.keymap.set("n", "<leader>3", switch_terminal(3))
-      vim.keymap.set("n", "<leader>4", switch_terminal(4))
-
+      for i = 1, 4 do
+        vim.keymap.set("n", "<leader>" .. i, switch_terminal(i))
+      end
       function _G.set_terminal_keymaps()
         local k_opts = { buffer = 0 }
         vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], k_opts)
-        vim.keymap.set("t", "<C-1>", [[<C-\><C-n><cmd>lua vim.api.nvim_input('<C-1>')<CR>]], k_opts)
-        vim.keymap.set("t", "<C-2>", [[<C-\><C-n><cmd>lua vim.api.nvim_input('<C-2>')<CR>]], k_opts)
-        vim.keymap.set("t", "<C-3>", [[<C-\><C-n><cmd>lua vim.api.nvim_input('<C-3>')<CR>]], k_opts)
+        for i = 1, 4 do
+          vim.keymap.set("t", "<C-"..i..">", [[<C-\><C-n><cmd>lua vim.api.nvim_input('<leader>]]..i..[[')<CR>]], k_opts)
+        end
       end
-
       opts.on_open = _G.set_terminal_keymaps
       toggleterm.setup(opts)
     end,
   },
-
   -- === Appearance & UI ===
   {
     "ellisonleao/gruvbox.nvim",
@@ -190,7 +197,7 @@ require("lazy").setup({
     "folke/snacks.nvim",
     priority = 1000,
     lazy = false,
-    opts = { picker = { enabled = true }, lazygit = { enabled = true } },
+    opts = { picker = { enabled = true, lazygit = { enabled = true } } },
     keys = {
       -- スマートピッカー
       { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Picker" },

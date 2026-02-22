@@ -1,4 +1,13 @@
-vim.lsp.enable("pyright")
+vim.lsp.config("pylsp", {
+  settings = {
+    pylsp = {
+      plugins = {
+        flake8 = { enabled = true },
+      },
+    },
+  },
+})
+vim.lsp.enable("pylsp")
 vim.lsp.config("rust_analyzer", {
 	settings = {
 		["rust-analyzer"] = {
