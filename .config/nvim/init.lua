@@ -113,10 +113,9 @@ require("lazy").setup({
     end,
   },
   { "nvim-tree/nvim-web-devicons", lazy = true },
-  { "nvim-lualine/lualine.nvim", opts = {} },
+  { "nvim-lualine/lualine.nvim", opts = {options = {theme = "auto", icons_enabled = false,}} },
   { "rcarriga/nvim-notify", opts = {} },
   { "mvllow/modes.nvim", event = "VeryLazy", opts = { line_opacity = 0.15 } },
-
   -- === Navigation & Search ===
   {
     "folke/flash.nvim",
@@ -180,17 +179,6 @@ require("lazy").setup({
       format_on_save = { timeout_ms = 500, lsp_fallback = true },
     },
   },
-
-  -- === Git ===
-  { "lewis6991/gitsigns.nvim", opts = {} },
-  {
-    "sindrets/diffview.nvim",
-    keys = {
-      { "<leader>gd", "<cmd>DiffviewOpen<cr>", desc = "Git Diff" },
-      { "<leader>gq", "<cmd>DiffviewClose<cr>", desc = "Close Diffview" },
-    },
-  },
-
   -- === Utilities & Tools ===
   { "folke/which-key.nvim", opts = { preset = "helix" } },
   {
@@ -240,7 +228,28 @@ require("lazy").setup({
       { "<leader>po", function() require("overlook.api").open_in_original_window() end, desc = "Open popup in current window" },
     },
   },
-  { "folke/trouble.nvim", opts = {} },
+  {
+    "folke/trouble.nvim",
+    opts = {}, -- for default options, refer to the configuration section for custom setup.
+    cmd = "Trouble",
+    keys = {
+      {
+        "<leader>xx",
+        "<cmd>Trouble diagnostics toggle focus=true<cr>",
+        desc = "Diagnostics (Trouble)",
+      },
+      {
+        "<leader>xX",
+        "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+        desc = "Buffer Diagnostics (Trouble)",
+      },
+      {
+        "<leader>xs",
+        "<cmd>Trouble symbols toggle focus=true<cr>",
+        desc = "Symbols (Trouble)",
+      },
+    },
+  },
   {
     "stevearc/oil.nvim",
     lazy = false,

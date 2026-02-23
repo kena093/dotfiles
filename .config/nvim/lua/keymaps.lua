@@ -2,8 +2,6 @@ vim.keymap.set('n', '<leader>n', '<cmd>nohl<CR>')
 vim.keymap.set("n", "<leader>w=", "<C-w>=", { desc = "Normalize window sizes" })
 vim.keymap.set("n", "<leader>wm", "<cmd>only<cr>", { desc = "Maximize window (close others)" })
 vim.keymap.set("n", "<leader>bo", "<cmd>%bd|e#|bd#<cr>", { desc = "Close all other buffers" })
-vim.keymap.set("n", "<leader>x", "<cmd>close<cr>", { desc = "Close Window (keep buffer)" })
-
 vim.keymap.set("n", "<leader>e", "<CMD>Oil<CR>", { desc = "Open file explorer" })
 vim.keymap.set('n', "<leader>ls", "<CMD>luafile %<CR>", { desc = "Execute current lua" })
 vim.keymap.set('n', '<leader>bo', '<cmd>silent! %bd|e#|bd#<cr>', { desc = "Close all buffers except current" })
