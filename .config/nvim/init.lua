@@ -25,7 +25,6 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- 3. プラグイン設定
 require("lazy").setup({
   -- === Navigation & Warp ===
   {
@@ -44,7 +43,18 @@ require("lazy").setup({
       vim.keymap.set("n", "<C-s>", function() harpoon:list():select(4) end)
     end,
   },
-
+  {
+    "Shatur/neovim-ayu",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('ayu').setup({
+        mirage = false,
+        terminal = true,
+      })
+      vim.cmd("colorscheme ayu-dark")
+    end,
+  },
   -- === Terminal (ToggleTerm) ===
   {
     "akinsho/toggleterm.nvim",
