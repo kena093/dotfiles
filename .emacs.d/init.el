@@ -1,11 +1,10 @@
-;; -----------------------------------------------------------
-;; 0. パッケージ管理と基本設定
-;; -----------------------------------------------------------
-;; macOS かつ、GUI版で起動している時だけ Command を Meta にする
 (when (equal system-type 'darwin)
 (setq mac-command-modifier 'meta))
 
 (define-key key-translation-map [?\C-h] [?\C-?])
+
+(setq warning-minimum-level :error)
+(setq native-comp-async-report-warnings-errors nil)
 
 (setq-default cursor-type 'box)
 (tool-bar-mode 0)
@@ -44,6 +43,11 @@
 
 (eval-when-compile
   (require 'use-package))
+
+(use-package plan9-theme
+  :ensure t
+  :config
+  (load-theme 'plan9 t))
 
 (use-package clipetty
   :ensure t
@@ -90,6 +94,7 @@
          ("C-s" . consult-line)          ; Swiper/Helm-swoop の代わり
          ("C-x b" . consult-buffer)      ; Ido/Helm-buffer の代わり
          ("M-y" . consult-yank-pop)      ; 貼り付け履歴
+	 ("C-c j" . consult-imenu)
 
          ;; --- rexim (Tsoding) スタイルのキーバインド ---
          ;; 彼は "C-c h" (helm) プレフィックスを多用していましたが、
@@ -105,7 +110,7 @@
 ;; 4. フォントと表示設定
 ;; -----------------------------------------------------------
 (set-face-attribute 'default nil
-                    :family "JetBrains Mono NL"
+                    :family "JetBrains Mono"
                     :height 140) ;; 120 = 12pt
 
 ;; 行番号を表示 (変数を設定するだけでは表示されないので、モードをONにします)
@@ -117,7 +122,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
+   '(rainbow-delimiters which-key plan9-theme term/xterm zenburn-theme modus-themes eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
  '(warning-suppress-types '((use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -163,8 +168,10 @@
          ("C-c m s" . magit-status) ; Gitステータス画面を開く
          ("C-c m l" . magit-log))   ; Gitログを見る
   :config
-  ;; 【重要】rexim 特有の設定
-  ;; Magit操作後に、開いているファイルのバッファを自動更新(revert)しないようにする
+  (setq magit-section-initial-visibility-alist
+        '((unstaged . show)
+          (staged . show)
+          (untracked . show)))
   (setq magit-auto-revert-mode t))
 
 ;; (オプション) git diff をシンタックスハイライトで見やすくする
@@ -200,19 +207,11 @@
   :config
   (yas-global-mode 1))
 
-(use-package gruvbox-theme
-  :ensure t
-  :init
-  ;; 読み込み時の警告を抑制（おまじない）
-  (setq native-comp-async-report-warnings-errors 'silent)
-  :config
-  (load-theme 'gruvbox-dark-medium t))
-
 (use-package whitespace
   :init
   (global-whitespace-mode 1)
   :config
-  (setq whitespace-style '(face trailing tabs spaces newline empty indentation space-after-tab space-before-tab))
+  (setq whitespace-style '(face trailing tabs newline empty indentation space-after-tab space-before-tab))
   ;; 保存時に行末の空白を自動削除
   (add-hook 'before-save-hook 'delete-trailing-whitespace))
 
@@ -446,12 +445,19 @@
         (alist-get ?\; avy-dispatch-alist) 'avy-action-flyspell
         (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
 
+(defun my-recenter (&rest _) (recenter))
+(advice-add 'scroll-up-command :after #'my-recenter)
+(advice-add 'scroll-down-command :after #'my-recenter)
 
-(use-package ultra-cursor     ; 1. カーソルがヌルヌル動く
-  :ensure (:host github :repo "mclear-tools/ultra-cursor")
-  :config (ultra-cursor-mode 1))
+(use-package which-key
+  :ensure t
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 0.1)
+  (setq which-key-popup-type 'minibuffer)
 
-(use-package ultra-scroll     ; 2. スクロールが爆速かつ滑らか
-  :ensure (:host github :repo "jdtsmith/ultra-scroll")
-  :init (setq scroll-conservatively 101)
-  :config (ultra-scroll-mode 1))
+  (which-key-mode))
+
+(use-package rainbow-delimiters
+  :ensure t
+  :hook (prog-mode . rainbow-delimiters-mode))
