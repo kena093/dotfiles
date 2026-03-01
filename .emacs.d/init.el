@@ -1,5 +1,7 @@
 (when (equal system-type 'darwin)
-(setq mac-command-modifier 'meta))
+(use-package go-mode
+  :ensure t
+  :hook (go-mode . eglot-ensure))(setq mac-command-modifier 'meta))
 
 (define-key key-translation-map [?\C-h] [?\C-?])
 
@@ -122,7 +124,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(rainbow-delimiters which-key plan9-theme term/xterm zenburn-theme modus-themes eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
+   '(go-mode rainbow-delimiters which-key plan9-theme term/xterm zenburn-theme modus-themes eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
  '(warning-suppress-types '((use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -316,6 +318,12 @@
   (add-to-list 'eglot-server-programs
                `(python-mode . ("pylsp"))))
 
+(with-eval-after-load 'eglot
+  (define-key eglot-mode-map (kbd "C-c l") #'flymake-show-project-diagnostics)
+
+  (define-key eglot-mode-map (kbd "M-S-n") #'flymake-goto-next-error)
+  (define-key eglot-mode-map (kbd "M-S-p") #'flymake-goto-prev-error))
+
 (setq delete-by-moving-to-trash t)
 
 (use-package vterm
@@ -461,3 +469,83 @@
 (use-package rainbow-delimiters
   :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package go-mode
+  :ensure t
+  :hook (go-mode . eglot-ensure))
+
+(defvar my-music-scroll-pos 0 "現在のスクロール位置")
+(defvar my-music-display-width 20 "モードラインに表示する文字数")
+(defvar my-music-string "" "モードライン表示用の文字列キャッシュ")
+
+(defun my-get-player-status ()
+  "playerctlから情報を非同期っぽく取得（エラー時は空文字）"
+  (let* ((cmd "playerctl metadata --format '{{ uc(status) }}: {{ artist }} | {{ title }} ' 2>/dev/null")
+         ;; call-processで直接取得し、シェル起動のオーバーヘッドを減らす
+         (raw (shell-command-to-string cmd)))
+    (replace-regexp-in-string "\n$" "" raw)))
+
+(defun my-update-music-string ()
+  "タイマーから呼ばれる更新関数"
+  (let* ((raw-status (my-get-player-status))
+         ;; 文字列が空、またはplayerctlがエラーを返した場合のハンドリング
+         (clean-status (if (or (string-empty-p raw-status)
+                               (string-match-p "No players" raw-status))
+                           ""
+                         raw-status))
+         ;; マルチバイト文字（日本語）を正しく扱うために数え方を指定
+         (len (length clean-status)))
+
+    (setq my-music-string
+          (if (<= len my-music-display-width)
+              clean-status
+            (let* ((padded (concat clean-status " | "))
+                   (padded-len (length padded))
+                   ;; 2回連結してsubstringすることでループを表現
+                   (double-str (concat padded padded))
+                   (result (substring double-str
+                                      my-music-scroll-pos
+                                      (+ my-music-scroll-pos my-music-display-width))))
+              ;; 次の開始位置を更新（モジュロ演算でループ）
+              (setq my-music-scroll-pos (% (1+ my-music-scroll-pos) padded-len))
+              result)))
+    ;; モードラインの表示を強制更新
+    (force-mode-line-update t)))
+
+;; タイマー開始（0.5秒だと滑らか、重ければ1.0に）
+(defvar my-music-timer
+  (run-with-timer 0 1 #'my-update-music-string))
+
+(defun my/eglot-toggle-with-highlight ()
+  "Eglotとすべての色付けを完全にトグルします。"
+  (interactive)
+  (unless (derived-mode-p 'org-mode)
+    (if (bound-and-true-p eglot--managed-mode)
+        (progn
+          (eglot-shutdown (eglot-current-server))
+          (font-lock-mode -1)
+          ;; セマンティックハイライト（LSP由来の色）も強制停止
+          (when (fboundp 'eglot-semantic-tokens-mode)
+            (eglot-semantic-tokens-mode -1))
+          (message "LSP & Highlight: OFF"))
+      (progn
+        (call-interactively 'eglot)
+        (font-lock-mode 1)
+        (message "LSP & Highlight: ON")))))
+
+(global-set-key (kbd "C-c e") 'my/eglot-toggle-with-highlight)
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c e") nil))
+
+(defun my/copy-last-message-to-clipboard ()
+  (interactive)
+  (with-current-buffer "*Messages*"
+    (save-excursion
+      (goto-char (point-max))
+      (forward-line -1)
+      (let ((last-msg (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+        (kill-new last-msg)
+        (message "Copied to clipboard: %s" last-msg)))))
+
+(global-set-key (kbd "C-c t") 'my/copy-last-message-to-clipboard)
