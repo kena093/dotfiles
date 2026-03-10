@@ -62,3 +62,4 @@ vim.keymap.set("n", "<S-l>", "<cmd>bnext<cr>", { desc = "Next Buffer" })
 vim.keymap.set("n", "<M-j>", "<cmd>m .+1<cr>", { desc = "Move Down" })
 vim.keymap.set("n", "<M-k>", "<cmd>m .-2<cr>", { desc = "Move Up" })
 
+vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { noremap = true })

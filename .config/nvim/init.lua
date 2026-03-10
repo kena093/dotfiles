@@ -1,4 +1,3 @@
--- 1. 前提設定の読み込み
 require("preload")
 require("general")
 require("utils")
@@ -11,7 +10,6 @@ if vim.fn.has("win32") == 1 then
   vim.opt.shellxquote = "" 
 end
 
--- 2. プラグインマネージャ (lazy.nvim) の起動準備
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   vim.fn.system({
@@ -114,14 +112,6 @@ require("lazy").setup({
     end,
   },
   -- === Appearance & UI ===
-  {
-    "ellisonleao/gruvbox.nvim",
-    priority = 1000,
-    config = function()
-      require("gruvbox").setup({ contrast = "hard", italic = { comments = true } })
-      vim.cmd("colorscheme gruvbox")
-    end,
-  },
   { "nvim-tree/nvim-web-devicons", lazy = true },
   { "nvim-lualine/lualine.nvim", opts = {options = {theme = "auto", icons_enabled = false,}} },
   { "rcarriga/nvim-notify", opts = {} },
@@ -153,12 +143,39 @@ require("lazy").setup({
       { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "Diagnostics" },
     },
   },
-
   -- === Coding & LSP ===
   {
     "neovim/nvim-lspconfig",
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",
+    },
+    config = function()
+      local has_cmp, cmp_nvim_lsp = pcall(require, "cmp-nvim-lsp")
+      local capabilities = has_cmp 
+        and cmp_nvim_lsp.default_capabilities() 
+        or vim.lsp.protocol.make_client_capabilities()
+      vim.lsp.config("*", {
+        capabilities = capabilities,
+        on_attach = function(_, bufnr)
+          local opts = { buffer = bufnr, silent = true }
+          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+          vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+          vim.keymap.set("n", "gi", vim.lsp.buf.implementation, {silent = true})
+          vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+          vim.keymap.set("n", "gh", vim.lsp.buf.hover, opts)
+          vim.keymap.set("n", "gq", vim.lsp.cmd.cclose, {silent = true})
+        end,
+      })
+      vim.lsp.enable("lua_ls", {
+        settings = {
+          Lua = {
+            diagnostics = { globals = { "vim" } },
+          },
+        },
+      })
+    end,
   },
-{
+  {
     "hrsh7th/nvim-cmp",
     dependencies = { "hrsh7th/cmp-nvim-lsp", "hrsh7th/cmp-buffer", "hrsh7th/cmp-path" },
     config = function()
@@ -195,7 +212,7 @@ require("lazy").setup({
     "folke/snacks.nvim",
     priority = 1000,
     lazy = false,
-    opts = { picker = { enabled = true, lazygit = { enabled = true } } },
+    opts = { bigfile = { enabled = ture }, dashboard = { enabled = ture }, input = { enabled = true }, notifier = { enabled = true }, picker = { enabled = true, lazygit = { enabled = true } } },
     keys = {
       -- スマートピッカー
       { "<leader><leader>", function() Snacks.picker.smart() end, desc = "Smart Picker" },
@@ -218,6 +235,9 @@ require("lazy").setup({
       -- LSP
       { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
       { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume Last Picker" },
+      { "<Leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
+      { "<Leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
+      { "<Leader>sr", function() Snacks.picker.lsp_references() end, nowait = true, desc = "References" },
     },
   },
   {
