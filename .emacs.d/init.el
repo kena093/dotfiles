@@ -1,12 +1,11 @@
 (when (equal system-type 'darwin)
-(use-package go-mode
-  :ensure t
-  :hook (go-mode . eglot-ensure))(setq mac-command-modifier 'meta))
+(setq mac-command-modifier 'meta))
 
 (define-key key-translation-map [?\C-h] [?\C-?])
 
 (setq warning-minimum-level :error)
 (setq native-comp-async-report-warnings-errors nil)
+(setq inhibit-startup-screen t)
 
 (setq-default cursor-type 'box)
 (tool-bar-mode 0)
@@ -46,10 +45,10 @@
 (eval-when-compile
   (require 'use-package))
 
-(use-package plan9-theme
-  :ensure t
-  :config
-  (load-theme 'plan9 t))
+(add-to-list 'default-frame-alist '(background-color . "black"))
+(add-to-list 'default-frame-alist '(foreground-color . "white"))
+(set-face-background 'default "black")
+(set-face-foreground 'default "white")
 
 (use-package clipetty
   :ensure t
@@ -60,24 +59,17 @@
             (unless (display-graphic-p)
               (diff-hl-margin-local-mode))))
 
-;; -----------------------------------------------------------
-;; 5. 補完・検索インターフェース (Telescopeの代替)
-;; -----------------------------------------------------------
-
-;; 1. Vertico: 縦型補完UI (これがTelescopeの見た目部分)
 (use-package vertico
   :ensure t
   :init
   (vertico-mode))
 
-;; 2. Orderless: あいまい検索 (スペース区切りで絞り込み)
 (use-package orderless
   :ensure t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
-;; 3. Marginalia: 補完候補の横に詳細情報を表示
 (use-package marginalia
   :ensure t
   :init
@@ -86,45 +78,33 @@
 (use-package consult
   :ensure t
   :init
-  ;; 【修正点】ここを :init にして、確実に変数を上書きします
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
   :config
-  ;; consult-xrefの設定
   (setq consult-xref-preserve-buffer-source t)
-  :bind (;; --- 標準的な置き換え ---
-         ("C-s" . consult-line)          ; Swiper/Helm-swoop の代わり
-         ("C-x b" . consult-buffer)      ; Ido/Helm-buffer の代わり
-         ("M-y" . consult-yank-pop)      ; 貼り付け履歴
+  :bind (
+         ("C-s" . consult-line)
+         ("C-x b" . consult-buffer)
+         ("M-y" . consult-yank-pop)
 	 ("C-c j" . consult-imenu)
-
-         ;; --- rexim (Tsoding) スタイルのキーバインド ---
-         ;; 彼は "C-c h" (helm) プレフィックスを多用していましたが、
-         ;; ここでは同じキーで Consult を呼び出すようにします。
-
-         ("C-c r" . consult-recent-file) ; 最近開いたファイル
-         ("C-c g g" . consult-git-grep)  ; Git grep
-         ("C-c f" . consult-find)        ; find (locate)
-
-         ;; 行ジャンプ (reximは M-g g を使うことが多いですが、consult-goto-line も M-g g が標準です)
+         ("C-c r" . consult-recent-file)
+         ("C-c g g" . consult-git-grep)
+         ("C-c f" . consult-find)
          ("M-g g" . consult-goto-line)))
-;; -----------------------------------------------------------
-;; 4. フォントと表示設定
-;; -----------------------------------------------------------
+
 (set-face-attribute 'default nil
                     :family "JetBrains Mono"
                     :height 140) ;; 120 = 12pt
 
-;; 行番号を表示 (変数を設定するだけでは表示されないので、モードをONにします)
 (setq display-line-numbers-type t)
-(global-display-line-numbers-mode t) ;; これが必要です
+(global-display-line-numbers-mode t)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(go-mode rainbow-delimiters which-key plan9-theme term/xterm zenburn-theme modus-themes eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
+   '(ayu-theme go-mode rainbow-delimiters which-key plan9-theme term/xterm zenburn-theme modus-themes eat smear-cursor beacon ultra-cursor embark expand-region ace-window vterm doom-themes yasnippet move-text multiple-cursors paredit magit-delta rust-mode corfu consult marginalia orderless vertico))
  '(warning-suppress-types '((use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -133,42 +113,35 @@
  ;; If there is more than one, they won't work right.
  )
 
-;; -----------------------------------------------------------
-;; 6. インバッファ補完 (Corfu)
-;;    LSPの補完候補をVSCodeのようにポップアップ表示します
-;; -----------------------------------------------------------
 (use-package corfu
   :ensure t
   :custom
-  (corfu-auto t)                 ;; 自動補完を有効にする
-  (corfu-auto-delay 0.1)         ;; 入力してからの遅延 (秒)
-  (corfu-auto-prefix 2)          ;; 2文字入力で補完開始
-  (corfu-cycle t)                ;; 候補リストをループさせる
+  (corfu-auto t)
+  (corfu-auto-delay 0.1)
+  (corfu-auto-prefix 2)
+  (corfu-cycle t)
   :init
   (global-corfu-mode))
 
- ;; ターミナル環境用の設定を追加
 (use-package corfu-terminal
   :ensure t
   :after corfu
   :init
-  (unless (display-graphic-p)    ;; GUIではない（ターミナルの）場合のみ有効化
+  (unless (display-graphic-p)
     (corfu-terminal-mode 1)))
 
-;; -----------------------------------------------------------
-;; 7. 各言語用モードの準備
-;; -----------------------------------------------------------
-;; Rust用モード (標準では入っていないため追加)
 (use-package rust-mode
   :ensure t
   :mode "\\.rs\\'")
-;; C, C++, Python はEmacs標準のモードが使われます
+
+(use-package go-mode
+  :ensure t)
 
 (use-package magit
   :ensure t
-  :bind (;; rexim のキーバインド
-         ("C-c m s" . magit-status) ; Gitステータス画面を開く
-         ("C-c m l" . magit-log))   ; Gitログを見る
+  :bind (
+         ("C-c m s" . magit-status)
+         ("C-c m l" . magit-log))
   :config
   (setq magit-section-initial-visibility-alist
         '((unstaged . show)
@@ -176,13 +149,11 @@
           (untracked . show)))
   (setq magit-auto-revert-mode t))
 
-;; (オプション) git diff をシンタックスハイライトで見やすくする
 (use-package magit-delta
   :ensure t
   :after magit
   :hook (magit-mode . magit-delta-mode))
 
-;; カッコの構造を維持する（Lispを書くなら必須級）
 (use-package paredit
   :ensure t
   :hook ((emacs-lisp-mode . paredit-mode)
@@ -190,124 +161,76 @@
          (lisp-interaction-mode . paredit-mode)
          (scheme-mode . paredit-mode)))
 
-;; 複数カーソル (VSCodeのCtrl+d的なやつ)
 (use-package multiple-cursors
   :ensure t
   :bind (("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
          ("C-c C-<" . mc/mark-all-like-this)))
 
-;; 行の入れ替え (M-p / M-n)
 (use-package move-text
   :ensure t
   :bind (("M-p" . move-text-up)
          ("M-n" . move-text-down)))
 
-;; スニペットエンジン
 (use-package yasnippet
   :ensure t
   :config
   (yas-global-mode 1))
 
 (use-package whitespace
-  :init
-  (global-whitespace-mode 1)
+  :hook (prog-mode . whitespace-mode)
   :config
   (setq whitespace-style '(face trailing tabs newline empty indentation space-after-tab space-before-tab))
-  ;; 保存時に行末の空白を自動削除
   (add-hook 'before-save-hook 'delete-trailing-whitespace))
 
-;; -----------------------------------------------------------
-;; 9. Dired (ファイラー) 設定
-;; -----------------------------------------------------------
 (use-package dired
-  :ensure nil ;; Emacs標準機能のため nil
+  :ensure nil
   :commands (dired dired-jump)
   :custom
-  ;; リスト表示のオプション
-  ;; -a: 隠しファイルも全て含める (omit-modeで隠すため一旦全取得)
-  ;; -l: 詳細リスト表示
-  ;; -h: ファイルサイズを読みやすく (1K, 1Mなど)
   (dired-listing-switches "-alh")
-
-  ;; 画面分割時、もう片方のディレクトリをコピー・移動のデフォルト宛先にする
-  ;; (これが非常に便利です)
   (dired-dwim-target t)
-
-  ;; マウスでファイルをドラッグして外部アプリ(Finder等)に渡せるようにする
   (dired-mouse-drag-files t)
-
   :hook
-  ;; Dired起動時に dired-omit-mode (不要なファイルを隠す機能) をオンにする
   (dired-mode . dired-omit-mode)
-
   :config
   (require 'dired-x))
 
-;; -----------------------------------------------------------
-;; 10. Tramp (リモート接続) 設定
-;; -----------------------------------------------------------
 (use-package tramp
   :ensure nil
   :custom
-  ;; リモートファイルを編集する際、自動保存ファイル(#file#)を
-  ;; リモート側ではなくローカルの /tmp に作成する。
-  ;; これにより、SSH接続時の書き込みラグを軽減できます。
   (tramp-auto-save-directory "/tmp"))
 
-;; 最近開いたファイルを保存する設定 (Consultを使うなら必須)
 (use-package recentf
-  :ensure nil ;; Emacs標準機能
+  :ensure nil
   :init
   (recentf-mode 1)
   :custom
-  (recentf-max-saved-items 200) ;; 200個まで履歴を保存
-  (recentf-auto-cleanup 'never)) ;; 履歴の自動削除を無効化（ssh先などが消えないように）
+  (recentf-max-saved-items 200)
+  (recentf-auto-cleanup 'never))
 
-;; -----------------------------------------------------------
-;; 選択範囲(リージョン)の文字列でプロジェクト検索する機能
-;; (reximの C-x p s の再現 + モダン化)
-;; -----------------------------------------------------------
 (defun my/consult-grep-from-region ()
-  "現在選択している文字列を使って consult-git-grep (または ripgrep) を開始します"
   (interactive)
   (let ((text (if (use-region-p)
                   (buffer-substring-no-properties (region-beginning) (region-end))
                 "")))
-    ;; ripgrep (rg) がインストールされているなら consult-ripgrep を、
-    ;; なければ consult-git-grep を使います
     (if (executable-find "rg")
         (consult-ripgrep nil text)
       (consult-git-grep nil text))))
 
-;; キーバインド設定
 (global-set-key (kbd "M-s") 'my/consult-grep-from-region)
 
-;; -----------------------------------------------------------
-;; 定義ジャンプ (Dumb Jump)
-;; -----------------------------------------------------------
 ;;(use-package dumb-jump
 ;;  :ensure t
 ;;  :init
-;;  ;; Emacs標準のジャンプ機能(xref)のエンジンとして dumb-jump を登録
-;;  ;; これにより、M-. を押した時に dumb-jump が動くようになります
 ;;  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
-;;
 ;;  :config
-;;  ;; ripgrep (rg) を強制的に使う設定
 ;;  (setq dumb-jump-force-searcher 'rg)
 ;;  (setq dumb-jump-prefer-searcher 'rg)
-;;
-;;  ;; ホームディレクトリなどを検索対象に含めないための設定
 ;;  (setq dumb-jump-default-project ""))
 
-;; -----------------------------------------------------------
-;; C/C++ 用 LSP設定 (ミニマリスト設定)
-;; -----------------------------------------------------------
 (use-package eglot
   :ensure t
-  ;; C/C++ モードで起動
-  :hook ((c-mode c++-mode python-mode) . eglot-ensure)
+  :hook ((c-mode c++-mode python-mode go-mode) . eglot-ensure)
   :config
   (add-to-list 'eglot-server-programs
                '((c-mode c++-mode)
@@ -327,12 +250,10 @@
 (setq delete-by-moving-to-trash t)
 
 (use-package vterm
-  ;; requirements: brew install cmake libvterm libtool
   :ensure t
   :custom
   (vterm-max-scrollback 10000)
   (vterm-buffer-name-string "vterm: %s")
-  ;; delete "C-h", add <f1> and <f2>
   (vterm-keymap-exceptions
    '("<f1>" "<f2>" "C-c" "C-x" "C-u" "C-g" "C-l" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y" "M-w"))
   :config
@@ -361,27 +282,19 @@
   :ensure t
   :bind ("M-o" . er/expand-region))
 
-;; Embarkのインストールと設定
 (use-package embark
   :ensure t
   :bind
-  (("C-." . embark-act)	; 通常時も C-. でEmbarkを使えるようにする（便利です）
-   ("C-:" . embark-dwim)		; 文脈に応じたアクション
-   ("C-h B" . embark-bindings))		; キーバインド一覧
+  (("C-." . embark-act)
+   ("C-:" . embark-dwim)
+   ("C-h B" . embark-bindings))
   :init
-  ;; ミニバッファでC-oを押すとEmbarkが動くようにするなど
   (setq prefix-help-command #'embark-prefix-help-command))
 
 (use-package avy
   :ensure t
   :bind ("C-;" . avy-goto-char-timer)
   :config
-  ;; -----------------------------------------------------------
-  ;; 1. カスタムアクション関数の定義
-  ;;    Avy読み込み後に定義されるようにここに書きます
-  ;; -----------------------------------------------------------
-
-  ;; 行削除 (K)
   (defun avy-action-kill-whole-line (pt)
     (save-excursion
       (goto-char pt)
@@ -389,8 +302,6 @@
     (select-window
      (cdr (ring-ref avy-ring 0)))
     t)
-
-  ;; 行コピー (W)
   (defun avy-action-copy-whole-line (pt)
     (save-excursion
       (goto-char pt)
@@ -400,25 +311,17 @@
     (select-window
      (cdr (ring-ref avy-ring 0)))
     t)
-
-  ;; 行ヤンク (Y)
   (defun avy-action-yank-whole-line (pt)
     (avy-action-copy-whole-line pt)
     (save-excursion (yank))
     t)
-
-  ;; 行移動 (T)
   (defun avy-action-teleport-whole-line (pt)
     (avy-action-kill-whole-line pt)
     (save-excursion (yank))
     t)
-
-  ;; マーク (SPC)
   (defun avy-action-mark-to-char (pt)
     (activate-mark)
     (goto-char pt))
-
-  ;; スペルチェック (;)
   (defun avy-action-flyspell (pt)
     (save-excursion
       (goto-char pt)
@@ -427,8 +330,6 @@
     (select-window
      (cdr (ring-ref avy-ring 0)))
     t)
-
-  ;; Embark (.)
   (defun avy-action-embark (pt)
     (unwind-protect
         (save-excursion
@@ -437,10 +338,6 @@
       (select-window
        (cdr (ring-ref avy-ring 0))))
     t)
-
-  ;; -----------------------------------------------------------
-  ;; 2. キー割り当て (変数 avy-dispatch-alist の編集)
-  ;; -----------------------------------------------------------
   (setf (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
         (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line
         (alist-get ?y avy-dispatch-alist) 'avy-action-yank
@@ -449,7 +346,7 @@
         (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line
         (alist-get ?t avy-dispatch-alist) 'avy-action-teleport
         (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line
-        (alist-get ?\s avy-dispatch-alist) 'avy-action-mark-to-char ; SPCキーは ?\s
+        (alist-get ?\s avy-dispatch-alist) 'avy-action-mark-to-char
         (alist-get ?\; avy-dispatch-alist) 'avy-action-flyspell
         (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
 
@@ -470,10 +367,6 @@
   :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
-(use-package go-mode
-  :ensure t
-  :hook (go-mode . eglot-ensure))
-
 (defvar my-music-scroll-pos 0 "現在のスクロール位置")
 (defvar my-music-display-width 20 "モードラインに表示する文字数")
 (defvar my-music-string "" "モードライン表示用の文字列キャッシュ")
@@ -488,31 +381,24 @@
 (defun my-update-music-string ()
   "タイマーから呼ばれる更新関数"
   (let* ((raw-status (my-get-player-status))
-         ;; 文字列が空、またはplayerctlがエラーを返した場合のハンドリング
          (clean-status (if (or (string-empty-p raw-status)
                                (string-match-p "No players" raw-status))
                            ""
                          raw-status))
-         ;; マルチバイト文字（日本語）を正しく扱うために数え方を指定
          (len (length clean-status)))
-
     (setq my-music-string
           (if (<= len my-music-display-width)
               clean-status
             (let* ((padded (concat clean-status " | "))
                    (padded-len (length padded))
-                   ;; 2回連結してsubstringすることでループを表現
                    (double-str (concat padded padded))
                    (result (substring double-str
                                       my-music-scroll-pos
                                       (+ my-music-scroll-pos my-music-display-width))))
-              ;; 次の開始位置を更新（モジュロ演算でループ）
               (setq my-music-scroll-pos (% (1+ my-music-scroll-pos) padded-len))
               result)))
-    ;; モードラインの表示を強制更新
     (force-mode-line-update t)))
 
-;; タイマー開始（0.5秒だと滑らか、重ければ1.0に）
 (defvar my-music-timer
   (run-with-timer 0 1 #'my-update-music-string))
 
@@ -524,7 +410,6 @@
         (progn
           (eglot-shutdown (eglot-current-server))
           (font-lock-mode -1)
-          ;; セマンティックハイライト（LSP由来の色）も強制停止
           (when (fboundp 'eglot-semantic-tokens-mode)
             (eglot-semantic-tokens-mode -1))
           (message "LSP & Highlight: OFF"))
@@ -549,3 +434,28 @@
         (message "Copied to clipboard: %s" last-msg)))))
 
 (global-set-key (kbd "C-c t") 'my/copy-last-message-to-clipboard)
+
+(defvar my-compile-slots (make-hash-table)
+  "番号 -> (directory . command) のテーブル")
+
+(defun my-compile-slot (num)
+  (interactive "nSlot: ")
+  (let* ((slot (gethash num my-compile-slots))
+         (buf-name (format "*compilation-%d*" num))
+         (compilation-buffer-name-function (lambda (_) buf-name))
+         (slot (if current-prefix-arg nil slot)))
+    (if slot
+        (let ((default-directory (car slot)))
+          (with-current-buffer (get-buffer-create buf-name)
+            (setq-local compile-command (cdr slot))
+            (recompile)))
+      (let* ((dir default-directory)
+             (cmd (read-shell-command "Compile command: " compile-command)))
+        (puthash num (cons dir cmd) my-compile-slots)
+        (let ((default-directory dir))
+          (compile cmd))))))
+
+(global-set-key (kbd "C-c 1") (lambda (p) (interactive "P") (let ((current-prefix-arg p)) (my-compile-slot 1))))
+(global-set-key (kbd "C-c 2") (lambda (p) (interactive "P") (let ((current-prefix-arg p)) (my-compile-slot 2))))
+(global-set-key (kbd "C-c 3") (lambda (p) (interactive "P") (let ((current-prefix-arg p)) (my-compile-slot 3))))
+(global-set-key (kbd "C-c 4") (lambda (p) (interactive "P") (let ((current-prefix-arg p)) (my-compile-slot 4))))
