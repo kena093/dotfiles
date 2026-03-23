@@ -45,11 +45,14 @@
 (eval-when-compile
   (require 'use-package))
 
-(add-to-list 'default-frame-alist '(background-color . "black"))
-(add-to-list 'default-frame-alist '(foreground-color . "white"))
-(set-face-background 'default "black")
-(set-face-foreground 'default "white")
-
+(use-package doom-themes
+  :ensure t
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-one t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
 (use-package clipetty
   :ensure t
   :hook (after-init . global-clipetty-mode))
