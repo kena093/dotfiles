@@ -45,3 +45,17 @@ plugins.pyflakes.enabled = false
 plugins.pycodestyle.enabled = false
 plugins.mccabe.enabled = false
 plugins.flake8.enabled = false
+
+[[language]]
+name = "c"
+auto-format = true
+language-servers = [ "clangd" ]
+
+[[language]]
+name = "haskell"
+auto-format = true
+language-servers = ["haskell-language-server"]
+
+[language-server.haskell-language-server]
+command = "haskell-language-server-wrapper"
+args = ["--lsp"]

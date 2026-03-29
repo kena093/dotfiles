@@ -1,15 +1,17 @@
-theme = "gruvbox"
+theme = "onedark"
 
 [editor]
 true-color=true
-cursorline=true
 mouse=true
-bufferline="multiple"
 popup-border="all"
+color-modes = true
+clipboard-provider = "win32-yank"
+rulers = [80, 120]
 idle-timeout=0
 lsp.display-messages = true
 lsp.display-inlay-hints = true
-auto-format = true
+completion-replace = true  
+trim-final-newlines = true
 
 [editor.cursor-shape]
 insert="bar"
@@ -17,23 +19,15 @@ normal="block"
 select="underline"
 
 [editor.statusline]
-left = ["mode", "spinner"]
-center = ["file-name"]
-right = ["diagnostics", "selections", "position-percentage", "position",  "file-encoding", "file-line-ending", "file-type"]
-separator = "│"
+left = ["mode", "spinner", "file-name"]
+center = ["diagnostics"]
+right = ["selections", "position-percentage", "position", "file-encoding", "file-line-ending", "file-type"]
 mode.normal = "normal"
 mode.insert = "insert"
 mode.select = "select"
 
-[editor.file-picker]
-hidden=false
-
 [editor.whitespace.render]
 tab = "all"
-
-[editor.indent-guides]
-render = true
-character = "|" 
 
 [keys.normal]
 X = "select_line_above"
