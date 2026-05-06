@@ -1,12 +1,49 @@
+(set-language-environment "Japanese")
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-buffer-file-coding-system 'utf-8)
+   
 (setq inhibit-startup-screen t)
+(setq inhibit-startup-message 1)
 (setq initial-scratch-message "")
 (setq ring-bell-function 'ignore)
 (setq use-short-answers t)
 (setq create-lockfiles nil)
-(setq make-backup-files nil)
-(setq auto-save-default nil)
+(setq ring-bell-function 'ignore)
+(setq show-trailing-whitespace t)
+(setq case-fold-search t)
+(global-auto-revert-mode t)
 
+(global-set-key (kbd "<C-left>")  'windmove-left)
+(global-set-key (kbd "<C-down>")  'windmove-down)
+(global-set-key (kbd "<C-up>")    'windmove-up)
+(global-set-key (kbd "<C-right>") 'windmove-right)
+
+(line-number-mode t)
+(column-number-mode t)
+(display-time-mode t)
+(setq display-time-24hr-format t)
+(size-indication-mode t)
+
+(define-key global-map (kbd "C-c /") 'comment-or-uncomment-region)
+
+(setq-default indent-tabs-mode nil)
+(setq default-tab-width 4)
+(setq tab-width 4)
+
+(let ((ls (member 'mode-line-buffer-identification
+                  mode-line-format)))
+  (setcdr ls
+    (cons '(:eval (concat " ("
+            (abbreviate-file-name default-directory)
+            ")"))
+          (cdr ls))))
+
+(global-set-key (kbd "C-x C-b") 'ibuffer)
 (bind-key* "C-h" 'delete-backward-char)
+(keyboard-translate ?\C-h ?\C-?)
+(global-set-key "\C-h" nil)
 (delete-selection-mode 1)
 
 (setq warning-minimum-level :error)
@@ -17,18 +54,15 @@
 
 
 (defconst my-backup-dir (locate-user-emacs-file "var/backup/"))
-(defconst my-autosave-dir (locate-user-emacs-file "var/auto-save/"))
-
 (unless (file-exists-p my-backup-dir)
   (make-directory my-backup-dir t))
-(unless (file-exists-p my-autosave-dir)
-  (make-directory my-autosave-dir t))
-
-(setq make-backup-files t)
 (setq backup-directory-alist `((".*" . ,my-backup-dir)))
 
-(setq auto-save-default t)
+(defconst my-autosave-dir (locate-user-emacs-file "var/auto-save/"))
+(unless (file-exists-p my-autosave-dir)
+  (make-directory my-autosave-dir t))
 (setq auto-save-file-name-transforms `((".*" ,my-autosave-dir t)))
+
 
 (require 'package)
 (setq package-archives
@@ -60,7 +94,16 @@
   :ensure t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+  (completion-category-overrides '((file (styles basic partial-completion))))
+  (orderless-matching-styles '(orderless-literal 
+                               orderless-regexp 
+                               orderless-initialism
+                               orderless-flex)))
+
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize))
 
 (use-package clipetty
   :ensure t
@@ -77,13 +120,6 @@
   :ensure t
   :config
   (global-centered-cursor-mode 1))
-
-(use-package whitespace
-  :init
-  (global-whitespace-mode 1)
-  :config
-  (setq whitespace-style '(face trailing))
-  (add-hook 'before-save-hook 'delete-trailing-whitespace))
 
 (use-package dired
   :ensure nil
@@ -141,6 +177,18 @@
          ("M-n" . move-text-down)))
 
 (add-to-list 'load-path user-emacs-directory)
+
+(setq xref-search-program 'ripgrep)
+
+(defun my/project-search-at-point ()
+  (interactive)
+  (let ((query (if (use-region-p)
+                   (buffer-substring-no-properties (region-beginning) (region-end))
+                 (thing-at-point 'symbol t))))
+    (project-find-regexp query)))
+
+(global-set-key (kbd "C-c p s") 'my/project-search-at-point)
+
 (require 'lsp)
 
 
