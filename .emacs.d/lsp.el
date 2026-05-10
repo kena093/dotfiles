@@ -8,14 +8,10 @@
 (use-package eglot
   :ensure nil
   :hook
-  ((python-mode . eglot-ensure)
-   (c-mode      . eglot-ensure)
-   (c++-mode    . eglot-ensure)
-   (go-mode     . eglot-ensure))
-  :config
-  (add-hook 'before-save-hook 'eglot-format-buffer)
-  (add-to-list 'eglot-server-programs `(python-mode . ("pylsp")))
-  (add-to-list 'eglot-server-programs `(go-mode . ("~/go/bin/gopls" "serve"))))
+  ((go-mode . eglot-ensure)
+   (rust-mode . eglot-ensure)
+   (c-mode . eglot-ensure)
+   (python-mode . eglot-ensure)))
 
 (use-package corfu
   :ensure t
@@ -24,7 +20,7 @@
   :config
   (setq corfu-auto t)
   (setq corfu-auto-delay 0.1)
-  (setq corfu-auto-prefix 2)
+  (setq corfu-auto-prefix 1)
   (setq corfu-cycle t)
   (unless (display-graphic-p)
     (use-package popon

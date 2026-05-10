@@ -95,8 +95,8 @@
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion))))
-  (orderless-matching-styles '(orderless-literal 
-                               orderless-regexp 
+  (orderless-matching-styles '(orderless-literal
+                               orderless-regexp
                                orderless-initialism
                                orderless-flex)))
 
@@ -115,6 +115,16 @@
 (use-package expand-region
   :ensure t
   :bind ("M-o" . er/expand-region))
+
+(use-package consult
+  :ensure t
+  :bind
+  (("C-x b" . consult-buffer)
+   ("M-g g" . consult-goto-line)
+   ("C-s" . consult-line)
+   ("M-y" . consult-yank-from-kill-ring)
+   ("M-g i" . consult-imenu)
+   ("C-c o" .   consult-outline)))
 
 (use-package centered-cursor-mode
   :ensure t
@@ -190,6 +200,8 @@
 (global-set-key (kbd "C-c p s") 'my/project-search-at-point)
 
 (require 'lsp)
+(require 'my-pro)
+(require 'avy-embark)
 
 
 (setq file-name-handler-alist default-file-name-handler-alist)
@@ -199,7 +211,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages '(vertico)))
+ '(package-selected-packages '(embark avy consult lsp-ui lox-mode vertico)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
