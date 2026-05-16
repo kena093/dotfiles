@@ -97,7 +97,7 @@
         "when": "inQuickOpen"
     }
     {
-        "key": "ctrl+r",
+        "key": "ctrl+j d",
         "command": "workbench.action.terminal.openDetectedLink"
     },
 ]
